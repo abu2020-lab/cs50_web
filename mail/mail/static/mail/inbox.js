@@ -35,4 +35,16 @@ function load_mailbox(mailbox) {
     show_mail();
     return;
   }
+
+  fetch(`/emails/${mailbox}`)
+  .then((response) => response.json())
+  .then((emails) => {
+    emails.forEach((element) => {
+      if (mailbox != "sent") {
+        sender_recipients = element.sender;        
+      } else {
+        sender_recipients = element.recipients;
+      }
+    })
+  })
 }
