@@ -150,7 +150,7 @@ function load_mailbox(mailbox) {
 
         // add listener and append to DOM
         div.addEventListener('click', () => load_email(email['id']));
-        view.appendChild(div);
+        document.querySelector('#emails-view').appendChild(div);
     });
   })
 }
