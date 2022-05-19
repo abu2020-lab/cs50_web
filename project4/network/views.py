@@ -3,8 +3,20 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django import forms
 
-from .models import User
+
+from .models import User, Post
+
+
+
+class NewPostForm(forms.Form):
+    post_text = forms.Field(widget=forms.Textarea({'rows': '3','maxlength' : 160,'class': 'form-control', 'placeholder': "What's Happening?", 'id': 'id_post_edit_text'
+        }),
+        label="New Post", required=True)
+
+
+
 
 
 def index(request):
@@ -61,3 +73,17 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+
+
+def newpost(request):
+    if request.method == "POST":
+        form = NewPostForm(request.POST)
+        if form.is_valid():
+            user = User.objects.get(id=request.session['_auth_user_id'])
+            text = form.cleaned_data["post_text"]
+            post = Post(user=user, text=text)
+            post.save()
+            return HttpResponseRedirect(reverse("index"))
+        else:
+            return HttpResponseRedirect(reverse("index"))
