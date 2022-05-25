@@ -20,7 +20,16 @@ class NewPostForm(forms.Form):
 
 
 def index(request):
-    return render(request, "network/index.html")
+    if request.user.is_authenticated:
+        user = request.session['_auth_user_id']
+        likes = Like.objects.filter(post=OuterRef('id'), user_id=user)
+        posts = Post.objects.filter().order_by('-post_date').annptate(current_like=Count(likes.values('id')))
+    else:
+        posts = Post.objects.order_by('-post_date').all()
+    return render(request, "network/index.html" , {
+        'posts': page_obj,
+        'form': NewPostForm()        
+    })
 
 
 def login_view(request):
