@@ -4,11 +4,13 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django import forms
+from django.db.models import OuterRef, Count
+from django.core.paginator import Paginator
 
 
-from .models import User, Post
+from .models import User, Post, Follower, Like
 
-
+MAX_POSTS_PER_PAGE = 10
 
 class NewPostForm(forms.Form):
     post_text = forms.Field(widget=forms.Textarea({'rows': '3','maxlength' : 160,'class': 'form-control', 'placeholder': "What's Happening?", 'id': 'id_post_edit_text'
@@ -26,6 +28,10 @@ def index(request):
         posts = Post.objects.filter().order_by('-post_date').annptate(current_like=Count(likes.values('id')))
     else:
         posts = Post.objects.order_by('-post_date').all()
+
+    paginator = Paginator(posts, MAX_POSTS_PER_PAGE)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     return render(request, "network/index.html" , {
         'posts': page_obj,
         'form': NewPostForm()        
