@@ -17,6 +17,16 @@ class NewPostForm(forms.Form):
         }),
         label="New Post", required=True)
 
+class NewEditPostForm(forms.Form):
+    id_post_edit_text = forms.Field(widget=forms.Textarea({
+        'rows': '3',
+        'maxlength': 160,
+        'class': 'form-control',
+        'placeholder': "What's happening?",
+        'id': 'id_post_edit_text'
+    }),
+    label="New Post", required=True)
+
 
 
 
@@ -36,6 +46,35 @@ def index(request):
         'posts': page_obj,
         'form': NewPostForm()        
     })
+
+def profile(request, username):
+    is_following = 0
+    profile_user = User.objects.get(username=username)
+    if request.user.is_authenticated:
+        logged_user = request.session['_auth_user_id']
+        is_following = Follower.objects.filter(follower=logged_user, following=profile_user).count()
+        likes = Like.objects.filter(post=OuterRef('id'), user_id=logged_user)
+        posts = Post.objects.filter(user=profile_user).order_by('post_date').annotate(current_like=Count(likes.values('id')))
+    else:
+        posts = Post.objects.filter(user=profile_user).order_by('post_date').all()
+
+    total_following = Follower.objects.filter(follower=profile_user).count()
+    total_followers = Follower.objects.filter(following=profile_user).count()
+
+    paginator = Paginator(posts, MAX_POSTS_PER_PAGE)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "network/profile.html", {
+        "user_profile": profile_user,
+        "posts": page_obj,
+        "is_following": is_following,
+        "total_following": is_following,
+        "total_following": total_following,
+        "total_followers": total_followers,
+        "form": NewPostForm(),
+        'form_edit': NewEditPostForm()
+    })
+
 
 
 def login_view(request):
