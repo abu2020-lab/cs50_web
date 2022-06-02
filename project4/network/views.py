@@ -35,7 +35,7 @@ def index(request):
     if request.user.is_authenticated:
         user = request.session['_auth_user_id']
         likes = Like.objects.filter(post=OuterRef('id'), user_id=user)
-        posts = Post.objects.filter().order_by('-post_date').annptate(current_like=Count(likes.values('id')))
+        posts = Post.objects.filter().order_by('-post_date').annotate(current_like=Count(likes.values('id')))
     else:
         posts = Post.objects.order_by('-post_date').all()
 
@@ -44,8 +44,10 @@ def index(request):
     page_obj = paginator.get_page(page_number)
     return render(request, "network/index.html" , {
         'posts': page_obj,
-        'form': NewPostForm()        
+        'form': NewPostForm(),
+        'form_edit': NewEditPostForm()        
     })
+
 
 def profile(request, username):
     is_following = 0
@@ -68,13 +70,11 @@ def profile(request, username):
         "user_profile": profile_user,
         "posts": page_obj,
         "is_following": is_following,
-        "total_following": is_following,
-        "total_following": total_following,
-        "total_followers": total_followers,
-        "form": NewPostForm(),
+        'total_following': total_following,
+        'total_followers': total_followers,
+        'form': NewPostForm(),
         'form_edit': NewEditPostForm()
     })
-
 
 
 def login_view(request):

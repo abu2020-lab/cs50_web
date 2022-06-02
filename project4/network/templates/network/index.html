@@ -26,8 +26,20 @@
                 </div>
             </form>
 
+            <p class="card-text">
+                <small class="text-muted">{{post.post_date}}</small>
+            </p>
+            <p>
+                <div data-id="{{post.id}}" class="card-link {% if post.current_like > 0 %} fas {%else%} far {% endif %} fa-heart">
+                    &nbsp<small class="text-muted">{{post.like_set.count}}</small>
+                </div>
+            </p>
+
         </div>
 
     </div>
+    {% empty %}
+    <h2>No posts</h2>
+    {% endfor %}
 </div>
 {% endblock %}
