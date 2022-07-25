@@ -48,6 +48,23 @@ def index(request):
         'form_edit': NewEditPostForm()        
     })
 
+def following(request):
+    if request.user.is_authenticated:
+        user = request.session['_auth_user_id']
+        followers = Follower.objects.filter(follower=user)
+        likes = Like.objects.filter(post=OuterRef('id'), user_id=user)
+        posts = Post.objects.filter(user_id___in=followers.values('following_id')).order_by('-post_date').annotate(current_like=Count(likes.values('id')))
+    else:
+        return HttpResponseRedirect(reverse("login"))
+
+    paginator = Paginator(posts, MAX_POSTS_PER_PAGE)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "network/following.html", {
+        'posts': page_obj,
+        'form': NewPostForm()
+    })
+
 
 def profile(request, username):
     is_following = 0
