@@ -53,7 +53,7 @@ def following(request):
         user = request.session['_auth_user_id']
         followers = Follower.objects.filter(follower=user)
         likes = Like.objects.filter(post=OuterRef('id'), user_id=user)
-        posts = Post.objects.filter(user_id___in=followers.values('following_id')).order_by('-post_date').annotate(current_like=Count(likes.values('id')))
+        posts = Post.objects.filter(user_id__in=followers.values('following_id')).order_by('-post_date').annotate(current_like=Count(likes.values('id')))
     else:
         return HttpResponseRedirect(reverse("login"))
 
