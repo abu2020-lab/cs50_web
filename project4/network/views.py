@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django import forms
@@ -64,6 +64,20 @@ def following(request):
         'posts': page_obj,
         'form': NewPostForm()
     })
+
+def follow(request, id):
+    try:
+        result = 'follow'
+        user = User.objects.get(id=request.session['_auth_user_id'])
+        user_follower = User.objects.get(id=id)
+        follower = Follower.objects.get_or_create(follower=user, following=user_follower)
+        if not follower[1]:
+            Follower.objects.filter(follower=user, following=user_follower).delete()
+            result = 'unfollow'
+        total_followers = Follower.objects.filter(following=user_follower).count()
+    except KeyError:
+        return HttpResponseBadRequest("Bad Request: no like chosen")
+    return JsonResponse({"result":result, "total_followers": total_followers})
 
 
 def profile(request, username):
