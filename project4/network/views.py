@@ -65,19 +65,69 @@ def following(request):
         'form': NewPostForm()
     })
 
+def newpost(request):
+    if request.method == "POST":
+        form = NewPostForm(request.POST)
+        if form.is_valid():
+            user = User.objects.get(id=request.session['_auth_user_id'])
+            text = form.cleaned_data["post_text"]
+            post = Post(user=user, text=text)
+            post.save()
+            return HttpResponseRedirect(reverse("index"))
+        else:
+            return HttpResponseRedirect(reverse("index"))
+
+def editpost(request, id):
+    if request.is_ajax and request.method == "POST":
+        form = NewEditPostForm(request.POST)
+        if form.is_valid():
+            text = form.cleaned_data["id_post_edit_text"]
+            Post.objects.filter(
+                id=id, user_id=request.session['_auth_user_id']).update(text=text)
+            return JsonResponse({"result": 'ok', 'text': text})
+        else:
+            return JsonResponse({"error": form.errors}, status=400)
+
+    return JsonResponse({"error": HttpResponseBadRequest("Bad Request: no like chosen")}, status=400)
+
+
+
 def follow(request, id):
     try:
         result = 'follow'
         user = User.objects.get(id=request.session['_auth_user_id'])
         user_follower = User.objects.get(id=id)
-        follower = Follower.objects.get_or_create(follower=user, following=user_follower)
+        follower = Follower.objects.get_or_create(
+            follower=user, following=user_follower)
         if not follower[1]:
-            Follower.objects.filter(follower=user, following=user_follower).delete()
+            Follower.objects.filter(
+                follower=user, following=user_follower).delete()
             result = 'unfollow'
-        total_followers = Follower.objects.filter(following=user_follower).count()
+        total_followers = Follower.objects.filter(
+            following=user_follower).count()
     except KeyError:
         return HttpResponseBadRequest("Bad Request: no like chosen")
-    return JsonResponse({"result":result, "total_followers": total_followers})
+    return JsonResponse({"result": result, "total_followers": total_followers})
+
+def like(request, id):
+
+    try:
+        css_class = 'fas fa-heart'
+        user = User.objects.get(id=request.session['_auth_user_id'])
+        post = Post.objects.get(id=id)
+        like = Like.objects.get_or_create(
+            user=user, post=post)
+        if not like[1]:
+            css_class = 'far fa-heart'
+            Like.objects.filter(user=user, post=post).delete()
+
+        total_likes = Like.objects.filter(post=post).count()
+    except KeyError:
+        return HttpResponseBadRequest("Bad Request: no like chosen")
+    return JsonResponse({
+        "like": id, "css_class": css_class, "total_likes": total_likes
+    })
+
 
 
 def profile(request, username):
@@ -161,14 +211,4 @@ def register(request):
 
 
 
-def newpost(request):
-    if request.method == "POST":
-        form = NewPostForm(request.POST)
-        if form.is_valid():
-            user = User.objects.get(id=request.session['_auth_user_id'])
-            text = form.cleaned_data["post_text"]
-            post = Post(user=user, text=text)
-            post.save()
-            return HttpResponseRedirect(reverse("index"))
-        else:
-            return HttpResponseRedirect(reverse("index"))
+
