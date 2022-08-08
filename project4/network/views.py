@@ -18,14 +18,10 @@ class NewPostForm(forms.Form):
         label="New Post", required=True)
 
 class NewEditPostForm(forms.Form):
-    id_post_edit_text = forms.Field(widget=forms.Textarea({
-        'rows': '3',
-        'maxlength': 160,
-        'class': 'form-control',
-        'placeholder': "What's happening?",
-        'id': 'id_post_edit_text'
-    }),
-    label="New Post", required=True)
+    """The edit post form class
+    """
+    id_post_edit_text = forms.Field(widget=forms.Textarea(
+        {'rows': '3', 'maxlength': 160, 'class': 'form-control', 'placeholder': "What's happening?", 'id': 'id_post_edit_text'}), label="New Post", required=True)
 
 
 
@@ -77,8 +73,12 @@ def newpost(request):
         else:
             return HttpResponseRedirect(reverse("index"))
 
+def is_ajax(request):
+    return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+
+
 def editpost(request, id):
-    if request.is_ajax and request.method == "POST":
+    if is_ajax(request=request) and request.method == "POST":
         form = NewEditPostForm(request.POST)
         if form.is_valid():
             text = form.cleaned_data["id_post_edit_text"]
@@ -87,7 +87,7 @@ def editpost(request, id):
             return JsonResponse({"result": 'ok', 'text': text})
         else:
             return JsonResponse({"error": form.errors}, status=400)
-
+    
     return JsonResponse({"error": HttpResponseBadRequest("Bad Request: no like chosen")}, status=400)
 
 
